@@ -358,7 +358,7 @@ const concepts = [
   {
     id: 15, block: 'b3', num: 'А',
     title: 'Loss Aversion — "Що ти насправді даруєш"',
-    principle: 'Канеман: страх втрати > бажання здобутку',
+    principle: 'Канеман: страх втрати → бажання здобутку',
     audience: 'Широка, будь-яка',
     platform: 'FB Feed · Reels',
     complexity: 'low',
@@ -475,7 +475,7 @@ const concepts = [
   {
     id: 24, block: 'b3', num: 'Ї',
     title: 'Pain Avoidance — "Стрес вибору"',
-    principle: 'Уникнення болю > бажання задоволення',
+    principle: 'Уникнення болю → бажання задоволення',
     audience: 'Широка, холодна',
     platform: 'FB · Search remarketing',
     complexity: 'low',
@@ -991,7 +991,7 @@ function rateConcept(id, val, e) {
 function buildCard(c) {
   const r = getRating(c.id);
   return `
-  <div class="card ${c.block} ${r > 0 ? 'rated' : ''}" data-block="${c.block}" data-id="${c.id}" data-title="${c.title.toLowerCase()} ${c.principle.toLowerCase()} ${c.audience.toLowerCase()}">
+  <div class="card ${c.block} ${r > 0 ? 'rated' : ''}" data-block="${c.block}" data-id="${c.id}" data-title="${escapeHtml((c.title + ' ' + c.principle + ' ' + c.audience).toLowerCase())}">
     <div class="card-header" onclick="toggleCard(${c.id})">
       <div class="card-num">${c.num}</div>
       <div class="card-title-wrap">
