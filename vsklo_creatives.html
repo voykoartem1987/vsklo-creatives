@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vsklo — Креативи</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --gold: #c9a84c;
+    --gold-soft: rgba(201,168,76,0.12);
+    --text: #e8e8e8;
+    --muted: #888;
+    --b1: #3a7bd5; /* Базові */
+    --b2: #e85d4a; /* WOW */
+    --b3: #7c4dce; /* Психологія */
+    --b4: #2db87a; /* Отримувачі */
+    --b5: #e8a23a; /* Тренди */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  .header { border-bottom: 1px solid var(--border); padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 100; }
+  .logo { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: var(--gold); }
+  .subtitle { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .count-badge { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--gold); padding: 6px 14px; border-radius: 20px; font-size: 13px; }
+
+  /* Stars */
+  .stars { display: flex; gap: 4px; padding: 0 20px 14px; align-items: center; }
+  .star { font-size: 20px; cursor: pointer; color: #333; transition: color .15s, transform .1s; line-height: 1; }
+  .star:hover, .star.active { color: var(--gold); }
+  .star:hover { transform: scale(1.2); }
+  .stars-label { font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .star-clear { font-size: 11px; color: #444; cursor: pointer; margin-left: 6px; transition: color .15s; }
+  .star-clear:hover { color: #e85d4a; }
+  .card.rated { border-color: rgba(201,168,76,0.35); }
+  .card.rated .card-header { background: rgba(201,168,76,0.04); }
+
+  /* Controls */
+  .controls { padding: 24px 40px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .search { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 8px; font-size: 14px; width: 260px; outline: none; transition: border .2s; }
+  .search:focus { border-color: var(--gold); }
+  .search::placeholder { color: var(--muted); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .filter-btn:hover { border-color: var(--gold); color: var(--text); }
+  .filter-btn.active { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 600; }
+  .expand-all { margin-left: auto; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .expand-all:hover { border-color: var(--gold); color: var(--text); }
+
+  /* Grid */
+  .grid { padding: 32px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+  /* Card */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border .2s, transform .15s; }
+  .card:hover { border-color: #3a3a3a; transform: translateY(-1px); }
+  .card.hidden { display: none; }
+
+  .card-header { padding: 18px 20px; cursor: pointer; display: flex; align-items: flex-start; gap: 14px; user-select: none; }
+  .card-num { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .card-title-wrap { flex: 1; }
+  .card-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .card-principle { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .chevron { color: var(--muted); font-size: 18px; transition: transform .25s; flex-shrink: 0; margin-top: 2px; }
+  .card.open .chevron { transform: rotate(180deg); }
+
+  .card-badges { padding: 0 20px 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .badge-audience { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .badge-complexity { }
+  .badge-low { background: rgba(45,184,122,0.15); color: #2db87a; }
+  .badge-mid { background: rgba(232,162,58,0.15); color: #e8a23a; }
+  .badge-high { background: rgba(232,93,74,0.15); color: #e85d4a; }
+  .badge-platform { background: rgba(58,123,213,0.15); color: #3a7bd5; }
+
+  /* Body */
+  .card-body { display: none; border-top: 1px solid var(--border); }
+  .card.open .card-body { display: block; }
+
+  .section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .section:last-child { border-bottom: none; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .section-text { font-size: 14px; line-height: 1.6; color: #ccc; }
+  .section-text blockquote { border-left: 2px solid var(--gold); padding-left: 12px; color: var(--text); font-style: italic; margin: 6px 0; }
+  .section-text ul { padding-left: 18px; }
+  .section-text li { margin-bottom: 4px; }
+
+  .product-tag { display: inline-block; background: var(--gold-soft); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); padding: 4px 12px; border-radius: 6px; font-size: 12px; margin-top: 4px; }
+
+  /* Block colors */
+  .b1 .card-num { background: rgba(58,123,213,0.2); color: var(--b1); }
+  .b2 .card-num { background: rgba(232,93,74,0.2); color: var(--b2); }
+  .b3 .card-num { background: rgba(124,77,206,0.2); color: var(--b3); }
+  .b4 .card-num { background: rgba(45,184,122,0.2); color: var(--b4); }
+  .b4r .card-num { background: rgba(45,184,122,0.2); color: var(--b4); }
+  .b5 .card-num { background: rgba(232,162,58,0.2); color: var(--b5); }
+
+  .b1 { border-left: 3px solid var(--b1); }
+  .b2 { border-left: 3px solid var(--b2); }
+  .b3 { border-left: 3px solid var(--b3); }
+  .b4 { border-left: 3px solid var(--b4); }
+  .b4r { border-left: 3px solid var(--b4); }
+  .b5 { border-left: 3px solid var(--b5); }
+
+  /* Section headers */
+  .block-header { padding: 32px 40px 12px; display: flex; align-items: center; gap: 14px; }
+  .block-header:not(:first-of-type) { padding-top: 20px; }
+  .block-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .block-title { font-size: 18px; font-weight: 700; }
+  .block-desc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* No results */
+  .no-results { padding: 60px 40px; text-align: center; color: var(--muted); font-size: 15px; display: none; }
+
+  /* Footer */
+  .footer { border-top: 1px solid var(--border); padding: 20px 40px; color: var(--muted); font-size: 12px; text-align: center; }
+
+  @media (max-width: 600px) {
+    .header, .controls, .grid, .block-header { padding-left: 16px; padding-right: 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .search { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">V · SKLO</div>
+    <div class="subtitle">База відео-креативів для реклами</div>
+  </div>
+  <div class="count-badge" id="totalCount">0 концепцій</div>
+</div>
+
+<div class="controls">
+  <input class="search" type="text" placeholder="Пошук за назвою або аудиторією..." id="searchInput">
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">Всі</button>
+    <button class="filter-btn" data-filter="b1">🎬 Базові</button>
+    <button class="filter-btn" data-filter="b2">🔥 WOW</button>
+    <button class="filter-btn" data-filter="b3">🧠 Психологія</button>
+    <button class="filter-btn" data-filter="b4">🎁 Отримувачі</button>
+    <button class="filter-btn" data-filter="b5">📱 Тренди</button>
+  </div>
+  <button class="expand-all" id="expandAll">Розгорнути всі</button>
+  <button class="expand-all" id="filterStars">⭐ Тільки з зірками</button>
+  <button class="expand-all" id="deleteUnrated" style="border-color:#e85d4a;color:#e85d4a;">🗑 Видалити без зірок</button>
+</div>
+
+<div id="mainContent"></div>
+<div class="no-results" id="noResults">Нічого не знайдено. Спробуйте інший запит.</div>
+
+<div class="footer">Vsklo Creative Database · Оновлено квітень 2026</div>
+
+<script>
+// ============================================================
+// ДАНІ КОНЦЕПЦІЙ
+// Щоб додати нову — скопіюй будь-який об'єкт і заповни поля.
+// Щоб видалити — видали об'єкт із масиву.
+// block: 'b1' | 'b2' | 'b3' | 'b4' | 'b5'
+// complexity: 'low' | 'mid' | 'high'
+// ============================================================
+const concepts = [
+
+  // ── БЛОК 1: БАЗОВІ ──────────────────────────────────────
+  {
+    id: 1, block: 'b1', num: '1',
+    title: '"Він сказав нічого не треба"',
+    principle: 'Аудиторна концепція — жінки',
+    audience: 'Жінки 25–45',
+    platform: 'Reels · Stories',
+    complexity: 'low',
+    hook: '"Він сказав: нічого не треба дарувати"',
+    middle: 'Рука відкриває дерев\'яну коробку → склянка з іменем/датою + камінці для віскі. Повільно, ASMR-темп.\n\n"Ми знаємо що подарувати. Персональний набір зі склом — зроблено в Україні, підписано тільки для нього."',
+    cta: '"Замов на vsklo.com.ua" · Кнопка: Обрати подарунок',
+    product: 'Склянка з іменем/датою + камінці для охолодження',
+    notes: 'Дерев\'яна коробка, крупні плани гравіювання, природне світло'
+  },
+  {
+    id: 2, block: 'b1', num: '2',
+    title: '"Куля всередині"',
+    principle: 'Аудиторна концепція — військові',
+    audience: 'Чоловіки 25–50, військові',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: 'Екстремальний крупний план: куля 7.62 запаяна всередині склянки. Камера віддаляється. Без слів.',
+    middle: '"Подарунок, який пам\'ятає звідки ми. Склянка з кулею — символ стійкості. Для тих, хто боронить."',
+    cta: '"Замов до дня народження побратима"',
+    product: 'Чарка з кулею + гравіювання емблеми ЗСУ/СБУ',
+    notes: 'Макро-зйомка кулі у склі, темний фон, чоловіча рука'
+  },
+  {
+    id: 3, block: 'b1', num: '3',
+    title: 'ASMR Packaging',
+    principle: 'Аудиторна концепція — широка / ретаргетинг',
+    audience: 'Широка холодна + ретаргетинг',
+    platform: 'Reels · Stories · TikTok',
+    complexity: 'low',
+    hook: 'Звук відкриття коробки. Тільки руки й упаковка, жодного тексту.',
+    middle: 'Без слів. Тільки звук і крупні плани:\n· Набір з поролону\n· Дерев\'яна коробка\n· Камінці для охолодження\n· Закривають, зав\'язують стрічку\n· Фінал: склянка з вишнею',
+    cta: '"Твій подарунок чекає на vsklo.com.ua"',
+    product: 'Будь-який набір у подарунковій упаковці',
+    notes: 'Вертикаль 9:16, природні звуки, без музики'
+  },
+  {
+    id: 4, block: 'b1', num: '4',
+    title: '"Подарунок мамі"',
+    principle: 'Аудиторна концепція — мама',
+    audience: 'Чоловіки і жінки 20–40',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: '"Мама знову каже \'мені нічого не потрібно\'"',
+    middle: 'Тепла музика. Крупні плани: набір келихів з вишнею, свічки, подарункова упаковка з сіном.\n\n"Вона заслуговує подарунок, а не слова. Набір зі склом — ніжно, особисто, зроблено в Україні."',
+    cta: '"Порадуй маму → vsklo.com.ua"',
+    product: 'Келихи для вина з вишнею або мандарином',
+    notes: 'Світлий фон, натуральні фактури (дерево, льон), тепле світло'
+  },
+  {
+    id: 5, block: 'b1', num: '5',
+    title: 'До / після (трансформація)',
+    principle: 'Аудиторна концепція — ретаргетинг',
+    audience: 'Ретаргетинг (були на сайті)',
+    platform: 'FB Feed · Instagram',
+    complexity: 'low',
+    hook: 'Спліт-екран. Зліва — звичайний подарунок у целофані. Справа — набір Leo. "Різниця очевидна"',
+    middle: 'Зум на правий бік. Відкривають коробку, виймають склянку з гравіюванням.\n\n"Персональний подарунок зі склом. Ім\'я, дата, символ — ручна робота. Україна."',
+    cta: '"Персоналізуй свій подарунок → від ₴800"',
+    product: 'Набір Leo',
+    notes: 'Два варіанти поруч, гравіювання крупним планом'
+  },
+
+  // ── БЛОК 2: WOW ─────────────────────────────────────────
+  {
+    id: 6, block: 'b2', num: '6',
+    title: '"Тест на міцність"',
+    principle: 'WOW — демонстрація якості через випробування',
+    audience: 'Широка, чоловіки',
+    platform: 'TikTok · Reels',
+    complexity: 'mid',
+    hook: 'Рука кидає склянку на бетон. Slow-mo. Склянка не розбивається.',
+    middle: '"Скло, яке витримує. Як і ми."\n\nКрупний план — жодної подряпини. Потім куля всередині.',
+    cta: '"Замов на vsklo.com.ua"',
+    product: 'Чарка з кулею',
+    notes: 'Знімати slow-mo, потрібна підготовка — перевірити міцність заздалегідь'
+  },
+  {
+    id: 7, block: 'b2', num: '7',
+    title: '"Замовлення з фронту"',
+    principle: 'WOW — емоційна реальність',
+    audience: 'Широка, військова тема',
+    platform: 'FB Feed · Reels',
+    complexity: 'mid',
+    hook: 'Голосове повідомлення — чоловічий голос, шум фону: "Привіт, замовте братові набір з кулею, він завтра повертається..."',
+    middle: 'Показують збірку замовлення, пакування, листівку. Фінал — Нова Пошта.',
+    cta: '"Замов зараз — доставимо швидко"',
+    product: 'Набір з кулею + подарункова упаковка',
+    notes: 'Максимальна автентичність — реальне або якісне постановочне голосове'
+  },
+  {
+    id: 8, block: 'b2', num: '8',
+    title: 'Slow-motion налив',
+    principle: 'WOW — чистий візуал, нуль слів',
+    audience: 'Широка',
+    platform: 'Instagram Feed · Demand Gen',
+    complexity: 'low',
+    hook: 'Віскі наливають у склянку з кулею — 240fps slow-mo. Рідина обтікає кулю, відблиски на склі.',
+    middle: 'Жодних слів. Тільки візуал + музика. Фінал — логотип і сайт.',
+    cta: 'Логотип + посилання (без тексту)',
+    product: 'Чарка з кулею',
+    notes: 'Потрібна камера з slow-mo або iPhone Pro. Виглядає дорого при мінімальних витратах.'
+  },
+  {
+    id: 9, block: 'b2', num: '9',
+    title: '"Реакція"',
+    principle: 'WOW — UGC, справжні емоції',
+    audience: 'Широка',
+    platform: 'FB Feed · Demand Gen · TikTok',
+    complexity: 'mid',
+    hook: 'Людина відкриває коробку — крупний план обличчя. Справжній подив.',
+    middle: 'Нарізка 3–4 різних реакцій: військовий, мама, чоловік. Жодного сценарію.\n\n"Найкращий подарунок — той, після якого не знаєш що сказати"',
+    cta: '"Подаруй незабутнє → vsklo.com.ua"',
+    product: 'Будь-який набір',
+    notes: 'Потрібні справжні відео від клієнтів або якісна постановка'
+  },
+  {
+    id: 10, block: 'b2', num: '10',
+    title: '"Скільки коштує пам\'ять?"',
+    principle: 'WOW — філософський хук',
+    audience: 'Широка 25–50',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'low',
+    hook: 'Чорний екран, повільно: "Скільки коштує пам\'ять про людину?"',
+    middle: '"Не квіти, які зів\'януть. Не шоколад, який з\'їдять. Скло — залишається назавжди."',
+    cta: '"Подарунок, який пам\'ятають роками → vsklo.com.ua"',
+    product: 'Персоналізований набір з іменем/датою',
+    notes: 'Тільки текст + продукт. Мінімальна складність виробництва.'
+  },
+  {
+    id: 11, block: 'b2', num: '11',
+    title: 'Таймлапс виробництва',
+    principle: 'WOW — показує ручне виробництво',
+    audience: 'Широка',
+    platform: 'TikTok · Reels · YouTube Shorts',
+    complexity: 'high',
+    hook: '"Знаєш як це зроблено?"',
+    middle: 'Таймлапс: сировина → скло → гравіювання → упаковка → доставка. 20 секунд.\n\n"Кожен виріб — ручна робота. Україна."',
+    cta: '"Замов свій → vsklo.com.ua"',
+    product: 'Будь-який персоналізований виріб',
+    notes: 'Потрібен доступ до виробництва + тривала зйомка'
+  },
+  {
+    id: 12, block: 'b2', num: '12',
+    title: '"Порівняй"',
+    principle: 'WOW — contrast positioning',
+    audience: 'Широка, холодна',
+    platform: 'Reels · TikTok',
+    complexity: 'low',
+    hook: 'Три подарунки поруч: шкарпетки, кружка з супермаркету, набір Vsklo. "Що ти обереш?"',
+    middle: 'Зум на набір, відкривають коробку, гравіювання крупним планом.\n\n"Подарунок, який виділяється. Від ₴800."',
+    cta: '"Обери унікальне → vsklo.com.ua"',
+    product: 'Будь-який набір',
+    notes: 'Потрібно підготувати реквізит — типові "погані" подарунки'
+  },
+  {
+    id: 13, block: 'b2', num: '13',
+    title: 'ASMR "Це для тебе"',
+    principle: 'WOW — immersive POV від першої особи',
+    audience: 'Широка, ретаргетинг',
+    platform: 'Stories · Reels',
+    complexity: 'low',
+    hook: '"Це для тебе 🎁" + звук розгортання упаковки',
+    middle: 'Камера від першої особи — ніби ТИ отримуєш подарунок. Відкриваєш, бачиш своє ім\'я на склянці.',
+    cta: '"Замов персональний подарунок → vsklo.com.ua"',
+    product: 'Персоналізований виріб з іменем',
+    notes: 'Знімати від першої особи, природне освітлення'
+  },
+  {
+    id: 14, block: 'b2', num: '14',
+    title: '"Не купуй це"',
+    principle: 'WOW — паттерн-брейкер',
+    audience: 'Широка',
+    platform: 'TikTok · Reels · FB',
+    complexity: 'low',
+    hook: '"Не купуй цей набір, якщо тобі байдуже що подарувати"',
+    middle: '"Але якщо хочеш здивувати — це найкраще скло в Україні. Ручна робота. Персональне гравіювання. Доставка по всій країні."',
+    cta: '"Здивуй → vsklo.com.ua"',
+    product: 'Будь-який набір',
+    notes: 'Нестандартний хук = люди дочитують до кінця, нижній CPM'
+  },
+
+  // ── БЛОК 3: ПСИХОЛОГІЯ ──────────────────────────────────
+  {
+    id: 15, block: 'b3', num: 'А',
+    title: 'Loss Aversion — "Що ти насправді даруєш"',
+    principle: 'Канеман: страх втрати > бажання здобутку',
+    audience: 'Широка, будь-яка',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: '"Він повернувся. І ти подарував йому... що?"',
+    middle: '"Квіти зів\'януть за тиждень.\nГроші — витратяться.\nШоколад — з\'їдять.\nА що залишиться?"\n\nКрупний план: склянка з гравіюванням — ім\'я, дата, символ.',
+    cta: '"Подарунок, який не зникне"',
+    product: 'Персоналізована склянка',
+    notes: 'Мінімальна складність: тільки текст + продукт'
+  },
+  {
+    id: 16, block: 'b3', num: 'Б',
+    title: 'Endowment Effect — "Уяви що це вже твоє"',
+    principle: 'Талер: людина цінує те, що вже уявила своїм',
+    audience: 'Ретаргетинг',
+    platform: 'Reels · Stories',
+    complexity: 'low',
+    hook: 'Камера від першої особи. Рука тягнеться до коробки. "Підніми її."',
+    middle: 'Відкриваєш. На склянці — своє ім\'я (або "твоє ім\'я").\n\n"Відчуваєш? Так виглядає подарунок, який запам\'ятають."',
+    cta: '"Персоналізуй свій → від ₴800"',
+    product: 'Персоналізований виріб',
+    notes: 'POV зйомка. Легко відтворити.'
+  },
+  {
+    id: 17, block: 'b3', num: 'В',
+    title: 'Social Norms — "Всі вже знають"',
+    principle: 'Чалдіні: нормативний соціальний вплив',
+    audience: 'Холодна аудиторія',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'mid',
+    hook: 'Нарізка різних людей з наборами Vsklo. Текст: "Вже 12 000 подарунків доставлено по Україні"',
+    middle: '"Від Харкова до Ужгорода. Від мами — синові. Від побратима — побратиму.\nСкло, яке об\'єднує."',
+    cta: '"Приєднуйся → vsklo.com.ua"',
+    product: 'Різні набори (нарізка)',
+    notes: 'Потрібна нарізка різних людей/ситуацій'
+  },
+  {
+    id: 18, block: 'b3', num: 'Г',
+    title: 'Future Self — "Яким тебе запам\'ятають"',
+    principle: 'Self-concept theory: купують версію себе',
+    audience: 'Жінки, подарунки чоловікам',
+    platform: 'FB Feed · Reels',
+    complexity: 'mid',
+    hook: '"Яким тебе запам\'ятає ця людина?"',
+    middle: 'Дві паралельні сцени: звичайний подарунок (незручна посмішка) vs набір Vsklo (справжній подив, обійми).\n\n"Подарунок — це не річ. Це те, що ти говориш про себе без слів."',
+    cta: '"Скажи правильне"',
+    product: 'Набір Leo або персоналізований',
+    notes: 'Дві сцени — потрібні актори або реальні клієнти'
+  },
+  {
+    id: 19, block: 'b3', num: 'Д',
+    title: 'Identity Lock-in — "Я людина, яка..."',
+    principle: 'Чалдіні: дії відповідно до власної ідентичності',
+    audience: 'Чоловіки 30–50',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'low',
+    hook: '"Ти з тих, хто дарує щось справжнє?"',
+    middle: 'Пауза.\n\n"Тоді ти вже знаєш що робити."\n\nКрупний план набору. Без зайвих слів.',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo або чарка з кулею',
+    notes: 'Дуже низька складність — тільки текст + продукт. Хто думає "так, я такий" — вже конвертований.'
+  },
+  {
+    id: 20, block: 'b3', num: 'Е',
+    title: 'Variable Reward — "Що всередині?"',
+    principle: 'Скіннер: непередбачувана винагорода активує дофамін',
+    audience: 'Широка, TOF',
+    platform: 'TikTok · Reels · Stories',
+    complexity: 'low',
+    hook: 'Закрита коробка. "Що всередині?" Камера повільно наближається. Не відкривають.',
+    middle: 'Різкий монтаж — відкривається інша коробка, реакція подиву.\n\n"Кожен набір — своя історія. Куля, вишня, BMW, дата — ти вирішуєш."',
+    cta: '"Склади свій → vsklo.com.ua"',
+    product: 'Персоналізований набір на вибір',
+    notes: 'Цікавість тримає до кінця — висока досматріваність'
+  },
+  {
+    id: 21, block: 'b3', num: 'Ж',
+    title: 'Cognitive Dissonance — "Ти вважаєш себе уважним?"',
+    principle: 'Дискомфорт між переконанням і поведінкою',
+    audience: 'Чоловіки (подарунок мамі)',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: '"Ти вважаєш себе уважним сином?"',
+    middle: '"Коли востаннє ти здивував маму чимось справжнім — не квітами на 8 березня, не грішми в конверті?"\n\n"Вона не скаже. Але вона запам\'ятає."',
+    cta: '"Час виправити це → vsklo.com.ua"',
+    product: 'Набір келихів з вишнею',
+    notes: 'Єдиний вихід з дискомфорту — купити'
+  },
+  {
+    id: 22, block: 'b3', num: 'З',
+    title: 'Curiosity Gap — "Чому вони замовляють знову?"',
+    principle: 'Льовенштейн: мозок не терпить незакритих питань',
+    audience: 'Широка, TOF',
+    platform: 'TikTok · Reels · Stories',
+    complexity: 'low',
+    hook: '"Чому військові замовляють це знову і знову?"',
+    middle: 'Не відповідаємо одразу. Показуємо набір з різних кутів, крупний план кулі.\n\n"Деякі речі пояснювати не треба."',
+    cta: '"Подивись сам → vsklo.com.ua"',
+    product: 'Чарка з кулею',
+    notes: 'Хук відкриває питання — людина дивиться до кінця'
+  },
+  {
+    id: 23, block: 'b3', num: 'І',
+    title: 'Mirror Neurons — "Реакція"',
+    principle: 'Дзеркальні нейрони: ми відчуваємо емоції інших',
+    audience: 'Широка',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'mid',
+    hook: 'Повільний зум на обличчя людини яка відкриває коробку. Подив → посмішка → сльози. Без тексту.',
+    middle: 'Тільки обличчя. 15 секунд. Тільки музика.\n\n"Подаруй цей момент."',
+    cta: '"vsklo.com.ua"',
+    product: 'Будь-який набір',
+    notes: 'Найсильніший емоційний тригер. Потрібна справжня або дуже переконлива реакція.'
+  },
+  {
+    id: 24, block: 'b3', num: 'Ї',
+    title: 'Pain Avoidance — "Стрес вибору"',
+    principle: 'Уникнення болю > бажання задоволення',
+    audience: 'Широка, холодна',
+    platform: 'FB · Search remarketing',
+    complexity: 'low',
+    hook: 'Людина скролить браузер: вкладки "що подарувати чоловіку", "незвичайний подарунок"... "Знайомо?"',
+    middle: '"Ми вже вирішили це за тебе.\nПерсональний набір зі склом. Ім\'я, дата, символ — і подарунок готовий.\nБез магазинів. Без \'не знаю що обрати\'."',
+    cta: '"Замов за 5 хвилин → vsklo.com.ua"',
+    product: 'Персоналізований набір',
+    notes: 'Знімає когнітивне навантаження — Vsklo як вирішення проблеми'
+  },
+  {
+    id: 25, block: 'b3', num: 'Й',
+    title: 'IKEA Effect — "Ти створюєш це"',
+    principle: 'Нортон: люди цінують те, що самі зробили',
+    audience: 'Ретаргетинг',
+    platform: 'Reels · FB',
+    complexity: 'mid',
+    hook: '"Цей подарунок зробиш ти. Ми тільки допоможемо."',
+    middle: 'Показують процес вибору: ім\'я → дата → символ → склянка → упаковка.\n\n"Не стандартний подарунок з полиці. Твій — від першої букви до останньої деталі."',
+    cta: '"Створи свій → vsklo.com.ua"',
+    product: 'Персоналізований виріб на вибір',
+    notes: 'Людина психологічно вже зробила подарунок — складніше не купити'
+  },
+  {
+    id: 26, block: 'b3', num: 'К',
+    title: 'Reciprocity — "Спочатку даємо"',
+    principle: 'Чалдіні: хто дає першим — отримує борг вдячності',
+    audience: 'Ретаргетинг · Brand awareness',
+    platform: 'FB Feed · YouTube',
+    complexity: 'mid',
+    hook: 'Відео-листівка без CTA: "Дякуємо кожному, хто боронить. Дякуємо кожній мамі, яка чекає."',
+    middle: 'Красиві кадри України, людей, продукту — як тло, не як герой.\n\nВ кінці тихо: "Vsklo. Зроблено в Україні."',
+    cta: 'Відсутній або "Дізнатись більше"',
+    product: 'Бренд загалом',
+    notes: 'У ретаргетингу після цього відео конверсія наступного оголошення зростає'
+  },
+
+  // ── БЛОК 4: ОТРИМУВАЧІ ──────────────────────────────────
+  {
+    id: 27, block: 'b4', num: '👩1',
+    title: 'Дружині — "Дата, яку ти пам\'ятаєш"',
+    principle: 'Романтика, річниця',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: 'Крупний план келиху — гравіювання дати. "__ . __ . ____ — день коли все змінилось."',
+    middle: 'Чоловік ставить коробку на стіл. Вона відкриває, бачить дату. Обличчя.\n\n"Деякі дати не забувають. Подаруй їй доказ."',
+    cta: '"Персоналізуй → vsklo.com.ua"',
+    product: 'Келих з вишнею + гравіювання дати весілля/знайомства',
+    notes: ''
+  },
+  {
+    id: 28, block: 'b4', num: '👩2',
+    title: 'Дружині — "Вона робить все"',
+    principle: 'Вдячність, визнання',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB Feed',
+    complexity: 'mid',
+    hook: 'Швидка нарізка: сніданок, діти, робота, вечеря. "Хто дякує їй за це?"',
+    middle: 'Красивий бокс на кухні вранці. Вона знаходить.\n\n"Іноді достатньо одного моменту."',
+    cta: '"Подаруй увагу → vsklo.com.ua"',
+    product: 'Подарунковий бокс з келихами',
+    notes: ''
+  },
+  {
+    id: 29, block: 'b4', num: '👩3',
+    title: 'Дружині — "Для двох"',
+    principle: 'Спільний момент, пара',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: 'Два келихи поруч. Свічки. "Деякі вечори заслуговують правильного скла."',
+    middle: 'Пара, вино, тиша. Жодних слів.',
+    cta: '"Набір для двох → vsklo.com.ua"',
+    product: 'Два келихи з вишнею в одному боксі',
+    notes: ''
+  },
+  {
+    id: 30, block: 'b4', num: '👩4',
+    title: 'Дружині — Підказка (від неї самої)',
+    principle: 'Жінка пересилає відео чоловіку',
+    audience: 'Жінки 25–45',
+    platform: 'Reels · Stories · TikTok',
+    complexity: 'low',
+    hook: '"Якщо ти шукаєш що мені подарувати — ось."',
+    middle: 'Показують набір, ціну, персоналізацію.\n\n"Підкажи йому. Він намагається."',
+    cta: '"Перешли це 😏"',
+    product: 'Будь-який з лінійки келихів',
+    notes: 'Вірусний потенціал через пересилання'
+  },
+  {
+    id: 31, block: 'b4', num: '👩5',
+    title: 'Дружині — Без приводу',
+    principle: 'Несподіванка, спонтанність',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: '"Сьогодні не річниця. Не день народження. Просто вівторок."',
+    middle: 'Чоловік приносить коробку додому. Вона здивована.\n\n"Найкращі подарунки — без приводу."',
+    cta: '"Замов сьогодні → vsklo.com.ua"',
+    product: 'Персоналізований келих з її іменем',
+    notes: ''
+  },
+  {
+    id: 32, block: 'b4', num: '👨1',
+    title: 'Другу — "Він розбереться"',
+    principle: 'Брутальний, без зайвих слів',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: 'Рука ставить чарку на дерево. Темний фон. Куля всередині. Звук. Жодного тексту.',
+    middle: 'Крупний план гравіювання — ім\'я друга.\n\n"Для того, хто розбирається."',
+    cta: '"vsklo.com.ua"',
+    product: 'Чарка з кулею + гравіювання імені',
+    notes: ''
+  },
+  {
+    id: 33, block: 'b4', num: '👨2',
+    title: 'Другу — Авто-тема',
+    principle: 'Для друга-автолюбителя',
+    audience: 'Чоловіки 25–50, авто',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: 'Звук двигуна. Логотип BMW/Audi в склі.\n\n"Він знає марки напам\'ять. Подаруй відповідно."',
+    middle: 'Набір чарок BMW на дерев\'яній підставці.',
+    cta: '"Для тих, хто розуміється на деталях → vsklo.com.ua"',
+    product: 'Чарки з вставкою BMW або Audi',
+    notes: ''
+  },
+  {
+    id: 34, block: 'b4', num: '👨3',
+    title: 'Другу — "Він заслужив"',
+    principle: 'Після важкого року, підтримка',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB Feed',
+    complexity: 'low',
+    hook: '"Цей рік був важким для нього. Ти знаєш."',
+    middle: 'Набір Leo в боксі. Без пафосу.\n\n"Іноді друзі не говорять — вони просто роблять."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo',
+    notes: ''
+  },
+  {
+    id: 35, block: 'b4', num: '👨4',
+    title: 'Другу — Дата дружби',
+    principle: 'Спільна пам\'ять',
+    audience: 'Чоловіки 25–45',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: '"Скільки років ви вже друзі?"',
+    middle: 'Чарка з гравіюванням року або дати спільної події.\n\n"Деякі дати варто тримати в руках."',
+    cta: '"Персоналізуй → vsklo.com.ua"',
+    product: 'Чарка з кулею + гравіювання дати',
+    notes: ''
+  },
+  {
+    id: 36, block: 'b4', num: '👨5',
+    title: 'Другу — Без приводу',
+    principle: 'Імпульсна покупка',
+    audience: 'Чоловіки 20–40',
+    platform: 'TikTok · Reels',
+    complexity: 'low',
+    hook: '"У нього скоро день народження? Ні. Просто п\'ятниця."',
+    middle: 'Швидко — як зробити замовлення за 5 хвилин.\n\n"Замов зараз. Доставимо до нього."',
+    cta: '"vsklo.com.ua"',
+    product: 'Чарка з кулею або BMW',
+    notes: ''
+  },
+  {
+    id: 37, block: 'b4', num: '👔1',
+    title: 'Начальнику — "Статус без лестощів"',
+    principle: 'Серйозний, лаконічний',
+    audience: 'Офісні 25–45',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'low',
+    hook: '"Подарунок начальнику — завжди складно."',
+    middle: '"Не торт. Не вино в пакеті. Не сертифікат.\nНабір зі скла — персональний, стриманий, запам\'ятовується."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo в преміальній упаковці',
+    notes: ''
+  },
+  {
+    id: 38, block: 'b4', num: '👔2',
+    title: 'Начальнику — "Дякую що вірив"',
+    principle: 'Вдячність, емоція',
+    audience: 'Офісні 25–45',
+    platform: 'FB Feed',
+    complexity: 'low',
+    hook: '"Він дав тобі шанс. Як ти скажеш дякую?"',
+    middle: 'Крупний план гравіювання — ім\'я керівника.\n\n"Слова забуваються. Добре скло — ні."',
+    cta: '"Персоналізуй → vsklo.com.ua"',
+    product: 'Персоналізований келих або чарка з іменем',
+    notes: ''
+  },
+  {
+    id: 39, block: 'b4', num: '👔3',
+    title: 'Начальнику — Pain Avoidance',
+    principle: '"Не знаю що подарувати начальнику"',
+    audience: 'Широка офісна',
+    platform: 'FB · Search',
+    complexity: 'low',
+    hook: 'Пошуковий рядок: "що подарувати начальнику на день народження"',
+    middle: '"Ми вирішили це за тебе.\nНабір зі скла — не дорого, не дешево. В точку."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo або подарунковий бокс',
+    notes: ''
+  },
+  {
+    id: 40, block: 'b4', num: '👔4',
+    title: 'Начальнику — "Він все бачить"',
+    principle: 'Людина яка розуміється на якості',
+    audience: 'Офісні 25–45',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'low',
+    hook: '"Він відрізнить дешевку від якості з першого погляду."',
+    middle: 'Крупні плани деталей: скло, гравіювання, упаковка.\n\n"Vsklo. Ручна робота. Гідний подарунок для гідної людини."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo',
+    notes: ''
+  },
+  {
+    id: 41, block: 'b4', num: '👔5',
+    title: 'Начальнику — Мінімалізм',
+    principle: 'Стриманість, для аудиторії що цінує якість',
+    audience: 'Офісні 30–50',
+    platform: 'FB Feed · Demand Gen',
+    complexity: 'low',
+    hook: 'Набір на столі в офісному інтер\'єрі. Жодного тексту 5 секунд.',
+    middle: 'Тільки продукт, деталі, упаковка.\n\n"Деякі подарунки говорять самі за себе."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo або персоналізований келих',
+    notes: ''
+  },
+  {
+    id: 42, block: 'b4', num: '💍1',
+    title: 'Чоловіку — "Він тримає все"',
+    principle: 'Вдячність дружини',
+    audience: 'Жінки 25–45',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: '"Він не скаржиться. Він просто тримає все на собі."',
+    middle: 'Набір Leo в боксі. Тепло, без пафосу.\n\n"Подаруй йому те, що відповідає його характеру."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo',
+    notes: ''
+  },
+  {
+    id: 43, block: 'b4', num: '💍2',
+    title: 'Чоловіку — "Він сказав нічого не треба"',
+    principle: 'Класичний хук, адаптація під чоловіка',
+    audience: 'Жінки 25–45',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: '"Він знову сказав \'нічого не купуй\'."',
+    middle: 'Жіночі руки відкривають сайт Vsklo. Обирають. Замовляють.\n\n"Ми обидва знаємо що це не так."',
+    cta: '"vsklo.com.ua"',
+    product: 'Чарка з кулею або набір Leo',
+    notes: ''
+  },
+  {
+    id: 44, block: 'b4', num: '💍3',
+    title: 'Чоловіку — Авто + характер',
+    principle: 'Для чоловіка-автолюбителя',
+    audience: 'Жінки 25–45, чоловіки авто',
+    platform: 'FB · Reels',
+    complexity: 'low',
+    hook: 'Звук двигуна + логотип BMW у склі. "Для чоловіка, у якого є смак."',
+    middle: 'Набір чарок BMW на темній поверхні.\n\n"Він оцінить."',
+    cta: '"vsklo.com.ua"',
+    product: 'Чарки BMW або Audi',
+    notes: ''
+  },
+  {
+    id: 45, block: 'b4', num: '💍4',
+    title: 'Чоловіку — Річниця',
+    principle: 'Дата весілля, спільна пам\'ять',
+    audience: 'Жінки 25–50',
+    platform: 'FB Feed · Reels',
+    complexity: 'low',
+    hook: 'Два келихи поруч. На кожному — ім\'я та дата. "__ років разом."',
+    middle: 'Повільно, музика. Без зайвих слів.\n\n"Деякі дати міряють не роками — а тим що всередині."',
+    cta: '"Персоналізуй пару → vsklo.com.ua"',
+    product: 'Пара персоналізованих чарок з датою весілля',
+    notes: ''
+  },
+  {
+    id: 46, block: 'b4', num: '💍5',
+    title: 'Чоловіку — "Він не купить це сам"',
+    principle: 'Імпульс для дружини',
+    audience: 'Жінки 25–45',
+    platform: 'FB · Reels · TikTok',
+    complexity: 'low',
+    hook: '"Він ніколи не купить це сам. Але він хоче."',
+    middle: 'Набір Leo або чарка — подається як річ яку чоловік хотів би сам.\n\n"Дозволь йому. Одного разу."',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір Leo або чарки з кулею',
+    notes: ''
+  },
+  {
+    id: 47, block: 'b4', num: '🎬★',
+    title: 'БОНУС — "Хто є у твоєму житті?" (Universal)',
+    principle: 'Один ролик для всіх аудиторій',
+    audience: 'Широка холодна',
+    platform: 'Demand Gen · FB Feed · Reels',
+    complexity: 'mid',
+    hook: '"Кому ти хочеш сказати дякую?"',
+    middle: 'Монтажна нарізка по 3–4 сек:\n· "Дружині..." → Келих з вишнею\n· "Другу..." → Чарка з кулею\n· "Начальнику..." → Набір Leo\n· "Чоловіку..." → Чарки BMW\n· "Мамі..." → Келихи з мандарином\n\nФінал — всі набори разом:\n"Для кожного — своє. Від Vsklo."',
+    cta: '"Обери свій → vsklo.com.ua"',
+    product: 'Вся лінійка (показати різноманіття)',
+    notes: 'Один ролик закриває всі аудиторії. Ідеально для широкої TOF та Demand Gen.'
+  },
+
+  // ── БЛОК 5: ТРЕНДИ ──────────────────────────────────────
+  {
+    id: 48, block: 'b5', num: 'T1',
+    title: 'POV Format',
+    principle: 'Trend: "POV:" — найпопулярніший формат Reels/TikTok',
+    audience: 'Широка',
+    platform: 'TikTok · Reels · Stories',
+    complexity: 'low',
+    hook: '"POV: ти нарешті знайшов що подарувати"',
+    middle: 'Від першої особи — відкриваєш сайт, обираєш, замовляєш. Швидкий монтаж. Реакція отримувача.',
+    cta: '"vsklo.com.ua"',
+    product: 'Будь-який набір',
+    notes: 'Легко зняти, нативно виглядає в стрічці'
+  },
+  {
+    id: 49, block: 'b5', num: 'T2',
+    title: '"Tell me without telling me"',
+    principle: 'Trend: покажи, не кажи',
+    audience: 'Широка',
+    platform: 'TikTok · Reels',
+    complexity: 'low',
+    hook: '"Скажи мені що ти цінуєш якість — без слів"',
+    middle: 'Людина мовчки ставить на стіл набір Leo. Все.',
+    cta: 'Немає — тільки посилання в профілі',
+    product: 'Набір Leo',
+    notes: 'Провокує коментарі і шери — люди тегають друзів'
+  },
+  {
+    id: 50, block: 'b5', num: 'T3',
+    title: '"Things I bought that I don\'t regret"',
+    principle: 'Trend: покупки без жалю — масово вірусяться',
+    audience: 'Жінки 25–40',
+    platform: 'TikTok · Reels',
+    complexity: 'low',
+    hook: '"Речі які я купила і ні разу не пожалкувала 🧡"',
+    middle: 'UGC-стиль — людина тримає набір, показує деталі.\n\n"Подарувала чоловіку на річницю — він досі ставить на найвидніше місце."',
+    cta: 'Посилання в профілі або в коментарі',
+    product: 'Будь-який набір — від першої особи',
+    notes: 'Повністю UGC-формат — просити клієнтів або робити самостійно'
+  },
+  {
+    id: 51, block: 'b5', num: 'T4',
+    title: '"Hot take"',
+    principle: 'Trend: провокаційна думка = коментарі = охоплення',
+    audience: 'Широка',
+    platform: 'TikTok · FB',
+    complexity: 'low',
+    hook: '"Гаряча думка: квіти — найгірший подарунок для чоловіка 🌸"',
+    middle: '"Вони зів\'януть за тиждень і він про них забуде за годину.\nА оце — стоїть на полиці роками."',
+    cta: '"vsklo.com.ua"',
+    product: 'Чарка з кулею або набір Leo',
+    notes: 'Провокує дискусію → органічне охоплення. Дуже легко зняти.'
+  },
+  {
+    id: 52, block: 'b5', num: 'T5',
+    title: '"The sign you were looking for"',
+    principle: 'Trend: мотиваційний формат, зберігають і пересилають',
+    audience: 'Широка',
+    platform: 'Stories · Reels',
+    complexity: 'low',
+    hook: '"Це той знак який ти шукав 👇"',
+    middle: '"Ти вже третій день думаєш що подарувати.\nОсь відповідь."',
+    cta: '"Замов зараз — доставимо швидко"',
+    product: 'Будь-який набір',
+    notes: ''
+  },
+  {
+    id: 53, block: 'b5', num: 'T6',
+    title: 'Comment Reply',
+    principle: 'Trend: відповідь на коментар — алгоритм TikTok просуває',
+    audience: 'Широка, військова тема',
+    platform: 'TikTok',
+    complexity: 'low',
+    hook: 'Реальний або постановочний коментар: "Що подарувати військовому другу на день народження?" → "Відповідаю на це питання раз і назавжди 👇"',
+    middle: 'Показують набір з кулею, пояснюють за 20 секунд.',
+    cta: '"vsklo.com.ua"',
+    product: 'Набір з кулею',
+    notes: 'Виглядає як органічний контент. Алгоритм TikTok любить цей формат.'
+  },
+  {
+    id: 54, block: 'b5', num: 'T7',
+    title: 'Countdown — "5 причин"',
+    principle: 'Trend: списки — висока досматріваність',
+    audience: 'Широка',
+    platform: 'TikTok · Reels',
+    complexity: 'mid',
+    hook: '"5 подарунків кращих за гроші в конверті (№1 здивує)"',
+    middle: 'Швидка нарізка — 5 пунктів по 2–3 секунди. Набори Vsklo на різних позиціях. №1 — найбільш несподіваний.',
+    cta: '"vsklo.com.ua"',
+    product: 'Різні набори (показати лінійку)',
+    notes: 'Люди дивляться до кінця щоб побачити №1'
+  },
+  {
+    id: 55, block: 'b5', num: 'T8',
+    title: '"Unpopular opinion"',
+    principle: 'Trend: суперечлива думка = дискусія',
+    audience: 'Широка',
+    platform: 'TikTok · FB',
+    complexity: 'low',
+    hook: '"Непопулярна думка: дорогий подарунок ≠ хороший подарунок 🔥"',
+    middle: '"Можна витратити ₴5000 на щось безглузде.\nА можна — на набір зі скла з іменем людини, яку любиш.\nРізниця — в увазі, не в ціні."',
+    cta: '"Персональні набори від ₴800 → vsklo.com.ua"',
+    product: 'Будь-який персоналізований набір',
+    notes: ''
+  },
+  {
+    id: 56, block: 'b5', num: 'T9',
+    title: 'Satisfying Process',
+    principle: 'Trend: ASMR + задоволення від процесу — мільярди переглядів',
+    audience: 'Широка',
+    platform: 'TikTok · Reels',
+    complexity: 'mid',
+    hook: 'Звук гравіювального верстату. Іскри. Крупний план.',
+    middle: 'Тільки процес — гравіювання імені на склі, повільно, детально, без слів. Потім готовий результат.',
+    cta: 'Посилання в профілі (без тексту у відео)',
+    product: 'Персоналізований виріб',
+    notes: 'Алгоритм просуває відео з високим часом перегляду. Satisfying контент дивляться по колу.'
+  },
+  {
+    id: 57, block: 'b5', num: 'T10',
+    title: 'Gift guide формат',
+    principle: 'Trend: сезонні гайди — вибухають перед святами',
+    audience: 'Широка, передсвяткова',
+    platform: 'TikTok · Reels · Pinterest',
+    complexity: 'mid',
+    hook: '"Подарунки для чоловіків які вони реально хочуть отримати 🎁"',
+    middle: 'Швидкий монтаж 4–5 продуктів з цінами. Lifestyle-стиль, не реклама.\n\n"І всі — персональні, зроблені в Україні."',
+    cta: '"vsklo.com.ua"',
+    product: 'Вся лінійка',
+    notes: 'Люди зберігають gift guide відео → органічне охоплення через Saves'
+  },
+];
+
+// ── FIREBASE ────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAd95io7SyEiAKhLZwV02rwG4BKPwhj4os",
+  authDomain: "vsklo-creatives.firebaseapp.com",
+  databaseURL: "https://vsklo-creatives-default-rtdb.firebaseio.com",
+  projectId: "vsklo-creatives",
+  storageBucket: "vsklo-creatives.firebasestorage.app",
+  messagingSenderId: "218508328660",
+  appId: "1:218508328660:web:b4f606ca5882ca04910541"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let ratingsCache = {};
+
+function getRating(id) {
+  return ratingsCache[id] || 0;
+}
+function setRating(id, val) {
+  if (val === 0) db.ref('ratings/' + id).remove();
+  else db.ref('ratings/' + id).set(val);
+}
+
+// ── РЕНДЕР ─────────────────────────────────────────────────
+const blocks = {
+  b1: { label: '🎬 Базові концепції', desc: 'Аудиторні концепції під конкретні сегменти', color: 'var(--b1)' },
+  b2: { label: '🔥 WOW / Вірусний контент', desc: 'Несподівані хуки, емоційний удар, вірусний потенціал', color: 'var(--b2)' },
+  b3: { label: '🧠 Поведінкова психологія', desc: 'Концепції на базі наукових механізмів прийняття рішень', color: 'var(--b3)' },
+  b4: { label: '🎁 Кому даруємо', desc: 'Концепції за отримувачем подарунка', color: 'var(--b4)' },
+  b5: { label: '📱 Тренди / Trend-jacking', desc: 'Адаптація вірусних форматів TikTok і Reels', color: 'var(--b5)' },
+};
+
+const complexityLabel = { low: 'Легко зняти', mid: 'Середня складність', high: 'Складне виробництво' };
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatText(str) {
+  return escapeHtml(str)
+    .replace(/^"(.+)"$/gm, '<blockquote>"$1"</blockquote>')
+    .replace(/\n·/g, '\n•')
+    .replace(/\n/g, '<br>')
+    .replace(/•/g, '&bull;');
+}
+
+// getRating і setRating визначені вище через Firebase
+
+function buildStars(id) {
+  const r = getRating(id);
+  let html = `<div class="stars" id="stars-${id}">`;
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="star ${i <= r ? 'active' : ''}" onclick="rateConcept(${id},${i},event)" title="${i} зір${i===1?'ка':i<5?'ки':'ок'}">★</span>`;
+  }
+  if (r > 0) html += `<span class="stars-label">${r}/5</span><span class="star-clear" onclick="rateConcept(${id},0,event)" title="Скинути">✕</span>`;
+  html += `</div>`;
+  return html;
+}
+
+function rateConcept(id, val, e) {
+  e.stopPropagation();
+  setRating(id, val);
+  const starsEl = document.getElementById('stars-' + id);
+  starsEl.outerHTML = buildStars(id);
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  card.classList.toggle('rated', val > 0);
+}
+
+function buildCard(c) {
+  const r = getRating(c.id);
+  return `
+  <div class="card ${c.block} ${r > 0 ? 'rated' : ''}" data-block="${c.block}" data-id="${c.id}" data-title="${c.title.toLowerCase()} ${c.principle.toLowerCase()} ${c.audience.toLowerCase()}">
+    <div class="card-header" onclick="toggleCard(${c.id})">
+      <div class="card-num">${c.num}</div>
+      <div class="card-title-wrap">
+        <div class="card-title">${escapeHtml(c.title)}</div>
+        <div class="card-principle">${escapeHtml(c.principle)}</div>
+      </div>
+      <div class="chevron">⌄</div>
+    </div>
+    <div class="card-badges">
+      <span class="badge badge-audience">${escapeHtml(c.audience)}</span>
+      <span class="badge badge-complexity badge-${c.complexity}">${complexityLabel[c.complexity]}</span>
+      <span class="badge badge-platform">${escapeHtml(c.platform)}</span>
+    </div>
+    ${buildStars(c.id)}
+    <div class="card-body">
+      <div class="section">
+        <div class="section-label">Хук</div>
+        <div class="section-text">${formatText(c.hook)}</div>
+      </div>
+      <div class="section">
+        <div class="section-label">Середина</div>
+        <div class="section-text">${formatText(c.middle)}</div>
+      </div>
+      <div class="section">
+        <div class="section-label">CTA</div>
+        <div class="section-text">${formatText(c.cta)}</div>
+      </div>
+      <div class="section">
+        <div class="section-label">Продукт</div>
+        <div class="section-text"><span class="product-tag">${escapeHtml(c.product)}</span></div>
+      </div>
+      ${c.notes ? `<div class="section"><div class="section-label">Нотатки</div><div class="section-text">${escapeHtml(c.notes)}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function render(filter = 'all', search = '') {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+  let total = 0;
+
+  const blockOrder = ['b1','b2','b3','b4','b5'];
+  blockOrder.forEach(bKey => {
+    const filtered = concepts.filter(c => {
+      const matchBlock = filter === 'all' || c.block === bKey && filter === bKey || filter === bKey;
+      if (!matchBlock && filter !== 'all') return false;
+      if (c.block !== bKey) return false;
+      if (search) {
+        return c.title.toLowerCase().includes(search) || c.principle.toLowerCase().includes(search) || c.audience.toLowerCase().includes(search) || c.product.toLowerCase().includes(search);
+      }
+      return true;
+    });
+    if (filtered.length === 0) return;
+
+    const bInfo = blocks[bKey];
+    const headerEl = document.createElement('div');
+    headerEl.className = 'block-header';
+    headerEl.innerHTML = `<div class="block-dot" style="background:${bInfo.color}"></div><div><div class="block-title">${bInfo.label}</div><div class="block-desc">${bInfo.desc}</div></div>`;
+    main.appendChild(headerEl);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    filtered.forEach(c => { grid.innerHTML += buildCard(c); total++; });
+    main.appendChild(grid);
+  });
+
+  document.getElementById('totalCount').textContent = `${total} концепцій`;
+  document.getElementById('noResults').style.display = total === 0 ? 'block' : 'none';
+}
+
+function toggleCard(id) {
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  card.classList.toggle('open');
+}
+
+// Filters
+let currentFilter = 'all';
+let allExpanded = false;
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    render(currentFilter, document.getElementById('searchInput').value.toLowerCase());
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', e => {
+  render(currentFilter, e.target.value.toLowerCase());
+});
+
+// Expand all
+document.getElementById('expandAll').addEventListener('click', () => {
+  allExpanded = !allExpanded;
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('open', allExpanded));
+  document.getElementById('expandAll').textContent = allExpanded ? 'Згорнути всі' : 'Розгорнути всі';
+});
+
+// Filter stars only
+let starsOnly = false;
+document.getElementById('filterStars').addEventListener('click', function() {
+  starsOnly = !starsOnly;
+  this.style.background = starsOnly ? 'var(--gold)' : '';
+  this.style.color = starsOnly ? '#000' : '';
+  this.style.borderColor = starsOnly ? 'var(--gold)' : '';
+  this.style.fontWeight = starsOnly ? '600' : '';
+  document.querySelectorAll('.card').forEach(card => {
+    const id = parseInt(card.dataset.id);
+    const rated = getRating(id) > 0;
+    if (starsOnly && !rated) card.classList.add('hidden');
+    else card.classList.remove('hidden');
+  });
+  // update section headers visibility
+  document.querySelectorAll('.grid').forEach(grid => {
+    const visible = [...grid.querySelectorAll('.card')].some(c => !c.classList.contains('hidden'));
+    grid.previousElementSibling.style.display = visible ? '' : 'none';
+    grid.style.display = visible ? '' : 'none';
+  });
+});
+
+// Delete unrated
+document.getElementById('deleteUnrated').addEventListener('click', function() {
+  const unrated = concepts.filter(c => getRating(c.id) === 0);
+  if (unrated.length === 0) { alert('Всі концепції вже мають зірки!'); return; }
+  const confirmed = confirm(`Видалити ${unrated.length} концепцій без зірок? Це видалить їх з поточної сесії.`);
+  if (!confirmed) return;
+  unrated.forEach(c => {
+    const idx = concepts.findIndex(x => x.id === c.id);
+    if (idx !== -1) concepts.splice(idx, 1);
+  });
+  render(currentFilter, document.getElementById('searchInput').value.toLowerCase());
+});
+
+render();
+
+// Real-time Firebase listener — оновлює зірки для всіх підключених
+db.ref('ratings').on('value', snapshot => {
+  ratingsCache = snapshot.val() || {};
+  // Оновити всі зірки на сторінці
+  document.querySelectorAll('.stars').forEach(el => {
+    const id = parseInt(el.id.replace('stars-', ''));
+    if (!isNaN(id)) el.outerHTML = buildStars(id);
+  });
+  // Оновити підсвічування карток
+  concepts.forEach(c => {
+    const card = document.querySelector(`.card[data-id="${c.id}"]`);
+    if (card) card.classList.toggle('rated', getRating(c.id) > 0);
+  });
+});
+</script>
+</body>
+</html>
