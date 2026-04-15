@@ -933,14 +933,33 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// Унікальний ID для кожного відвідувача
+let voterId = localStorage.getItem('vsklo_voter_id');
+if (!voterId) {
+  voterId = 'v_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('vsklo_voter_id', voterId);
+}
+
+// Cache: { conceptId: { voterId: rating, ... } }
 let ratingsCache = {};
 
-function getRating(id) {
-  return ratingsCache[id] || 0;
+function getUserRating(id) {
+  return ratingsCache[id]?.[voterId] || 0;
 }
+// Зворотна сумісність для фільтрів
+function getRating(id) { return getUserRating(id); }
+
+function getAvgRating(id) {
+  const votes = ratingsCache[id] || {};
+  const vals = Object.values(votes).filter(v => v > 0);
+  if (!vals.length) return { avg: 0, count: 0 };
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return { avg: Math.round(avg * 10) / 10, count: vals.length };
+}
+
 function setRating(id, val) {
-  if (val === 0) db.ref('ratings/' + id).remove();
-  else db.ref('ratings/' + id).set(val);
+  if (val === 0) db.ref('ratings/' + id + '/' + voterId).remove();
+  else db.ref('ratings/' + id + '/' + voterId).set(val);
 }
 
 // ── РЕНДЕР ─────────────────────────────────────────────────
@@ -969,12 +988,19 @@ function formatText(str) {
 // getRating і setRating визначені вище через Firebase
 
 function buildStars(id) {
-  const r = getRating(id);
+  const userR = getUserRating(id);
+  const { avg, count } = getAvgRating(id);
   let html = `<div class="stars" id="stars-${id}">`;
   for (let i = 1; i <= 5; i++) {
-    html += `<span class="star ${i <= r ? 'active' : ''}" onclick="rateConcept(${id},${i},event)" title="${i} зір${i===1?'ка':i<5?'ки':'ок'}">★</span>`;
+    html += `<span class="star ${i <= userR ? 'active' : ''}" onclick="rateConcept(${id},${i},event)" title="${i} зір${i===1?'ка':i<5?'ки':'ок'}">★</span>`;
   }
-  if (r > 0) html += `<span class="stars-label">${r}/5</span><span class="star-clear" onclick="rateConcept(${id},0,event)" title="Скинути">✕</span>`;
+  if (count > 0) {
+    const word = count === 1 ? 'голос' : count < 5 ? 'голоси' : 'голосів';
+    html += `<span class="stars-label">★ ${avg} · ${count} ${word}</span>`;
+  } else {
+    html += `<span class="stars-label" style="opacity:.35">не оцінено</span>`;
+  }
+  if (userR > 0) html += `<span class="star-clear" onclick="rateConcept(${id},0,event)" title="Скинути свій голос">✕</span>`;
   html += `</div>`;
   return html;
 }
@@ -1130,16 +1156,17 @@ render();
 
 // Real-time Firebase listener — оновлює зірки для всіх підключених
 db.ref('ratings').on('value', snapshot => {
-  ratingsCache = snapshot.val() || {};
-  // Оновити всі зірки на сторінці
+  // Нова структура: { conceptId: { voterId: rating } }
+  const data = snapshot.val() || {};
+  ratingsCache = data;
+
   document.querySelectorAll('.stars').forEach(el => {
     const id = parseInt(el.id.replace('stars-', ''));
     if (!isNaN(id)) el.outerHTML = buildStars(id);
   });
-  // Оновити підсвічування карток
   concepts.forEach(c => {
     const card = document.querySelector(`.card[data-id="${c.id}"]`);
-    if (card) card.classList.toggle('rated', getRating(c.id) > 0);
+    if (card) card.classList.toggle('rated', getUserRating(c.id) > 0);
   });
 });
 </script>
