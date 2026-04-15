@@ -122,10 +122,57 @@
   /* Footer */
   .footer { border-top: 1px solid var(--border); padding: 20px 40px; color: var(--muted); font-size: 12px; text-align: center; }
 
+  /* Tab nav */
+  .tab-nav { display: flex; gap: 4px; padding: 0 40px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 85px; z-index: 99; }
+  .tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+
+  /* Hypotheses */
+  .hyp-grid { padding: 32px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .hyp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border .2s; }
+  .hyp-card:hover { border-color: #3a3a3a; }
+  .hyp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .hyp-title { font-size: 15px; font-weight: 600; }
+  .hyp-segment { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .hyp-status { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; cursor: pointer; }
+  .status-idea { background: rgba(136,136,136,0.15); color: var(--muted); }
+  .status-testing { background: rgba(232,162,58,0.15); color: #e8a23a; }
+  .status-confirmed { background: rgba(45,184,122,0.15); color: #2db87a; }
+  .status-rejected { background: rgba(232,93,74,0.15); color: #e85d4a; }
+  .hyp-body { font-size: 13px; color: #bbb; line-height: 1.6; margin-bottom: 12px; }
+  .hyp-products { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .hyp-product { background: var(--gold-soft); border: 1px solid rgba(201,168,76,0.2); color: var(--gold); padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+  .hyp-priority { font-size: 11px; color: var(--muted); }
+  .hyp-priority span { color: var(--text); }
+  .hyp-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .hyp-notes textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px; font-size: 12px; resize: vertical; min-height: 60px; outline: none; font-family: inherit; }
+  .hyp-notes textarea:focus { border-color: var(--gold); }
+  .hyp-add-btn { margin: 0 40px 32px; background: var(--surface); border: 1px dashed var(--border); color: var(--muted); padding: 14px; border-radius: 12px; font-size: 14px; cursor: pointer; width: calc(100% - 80px); transition: all .2s; }
+  .hyp-add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Products */
+  .prod-grid { padding: 32px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .prod-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .prod-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .prod-name { font-size: 15px; font-weight: 600; }
+  .prod-price { font-size: 14px; color: var(--gold); font-weight: 600; white-space: nowrap; margin-left: 12px; }
+  .prod-body { padding: 14px 20px; }
+  .prod-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; margin-top: 12px; }
+  .prod-label:first-child { margin-top: 0; }
+  .prod-text { font-size: 13px; color: #bbb; line-height: 1.5; }
+  .prod-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .prod-tag { background: rgba(58,123,213,0.12); color: #3a7bd5; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+
   @media (max-width: 600px) {
     .header, .controls, .grid, .block-header { padding-left: 16px; padding-right: 16px; }
+    .tab-nav { padding: 0 16px; top: 80px; }
+    .hyp-grid, .prod-grid { padding: 16px; grid-template-columns: 1fr; }
     .grid { grid-template-columns: 1fr; }
     .search { width: 100%; }
+    .hyp-add-btn { margin: 0 16px 24px; width: calc(100% - 32px); }
   }
 </style>
 </head>
@@ -134,11 +181,18 @@
 <div class="header">
   <div>
     <div class="logo">V · SKLO</div>
-    <div class="subtitle">База відео-креативів для реклами</div>
+    <div class="subtitle">Creative Database</div>
   </div>
   <div class="count-badge" id="totalCount">0 концепцій</div>
 </div>
 
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="creatives">🎬 Креативи</button>
+  <button class="tab-btn" data-tab="hypotheses">💡 Гіпотези</button>
+</div>
+
+<!-- ═══ TAB: КРЕАТИВИ ═══ -->
+<div class="tab-section active" id="tab-creatives">
 <div class="controls">
   <input class="search" type="text" placeholder="Пошук за назвою або аудиторією..." id="searchInput">
   <div class="filters">
@@ -156,6 +210,14 @@
 
 <div id="mainContent"></div>
 <div class="no-results" id="noResults">Нічого не знайдено. Спробуйте інший запит.</div>
+</div><!-- /tab-creatives -->
+
+<!-- ═══ TAB: ГІПОТЕЗИ ═══ -->
+<div class="tab-section" id="tab-hypotheses">
+  <div class="hyp-grid" id="hypGrid"></div>
+  <button class="hyp-add-btn" onclick="addHypothesis()">+ Додати гіпотезу</button>
+</div>
+
 
 <div class="footer">Vsklo Creative Database · Оновлено квітень 2026</div>
 
@@ -921,6 +983,241 @@ const concepts = [
   },
 ];
 
+// ── ГІПОТЕЗИ ────────────────────────────────────────────────
+// status: 'idea' | 'testing' | 'confirmed' | 'rejected'
+// priority: 'high' | 'mid' | 'low'
+// Щоб додати — скопіюй об'єкт і заповни поля.
+const hypotheses = [
+  {
+    id: 'h1',
+    segment: 'Повсякденність',
+    title: 'Склянки Vsklo як частина щоденного ритуалу',
+    body: 'Всі конкуренти позиціонують скло як подарунок. Ніхто не каже "це для твого щоденного ранку/вечора". Якщо людина тягнеться до цієї склянки кожного дня — це топ-оф-майнд і повторна покупка.',
+    products: ['Набір LEO 2', 'Набір чарок MIX', 'Набір БК маленький'],
+    priority: 'high',
+    status: 'idea',
+  },
+  {
+    id: 'h2',
+    segment: 'Весільний сегмент',
+    title: 'Мальчишник / дівич-вечір / день весілля',
+    body: 'Незайнятий сегмент в Україні. Набір чарок з іменами хлопців на мальчишник, персоналізовані келихи для дівич-вечора, пара наречених з датою. BenShot цього не робить.',
+    products: ['Набір чарок MIX', 'Набір LEO 2', 'Набір LEO 3'],
+    priority: 'high',
+    status: 'idea',
+  },
+  {
+    id: 'h3',
+    segment: 'Хобі-сегмент',
+    title: 'Подарунок для людини з конкретним хобі',
+    body: 'BenShot довів: гольф, хокей, риболовля, музика — кожне хобі це окрема аудиторія з точним таргетингом. У Vsklo є BMW/Audi — це вже хобі-логіка. Можна розширити: мото, спорт, риболовля.',
+    products: ['Набір чарок MIX (BMW/Audi)'],
+    priority: 'mid',
+    status: 'idea',
+  },
+  {
+    id: 'h4',
+    segment: 'Self-gifting',
+    title: '"Я заслуговую красивий бокал" — покупка для себе',
+    body: 'Люди купують собі. Особливо жінки 25–40. Ніхто з конкурентів не говорить до цієї аудиторії напряму. Окремий кут: не подарунок комусь, а собі — за досягнення, після важкого дня, просто так.',
+    products: ['Набір LEO 2', 'Набір БК маленький'],
+    priority: 'mid',
+    status: 'idea',
+  },
+  {
+    id: 'h5',
+    segment: 'Сторітелінг',
+    title: 'Мінісеріал "реальних історій" подарунків',
+    body: 'Наративна дуга: людина → привід → пошук → Vsklo → момент вручення → реакція. Найемоційніший формат. Можна зробити серію: "Подарунок мамі", "Для побратима", "На річницю". Найкраще ділиться.',
+    products: ['Будь-який бестселер'],
+    priority: 'high',
+    status: 'idea',
+  },
+  {
+    id: 'h6',
+    segment: 'Gift-сегмент',
+    title: 'Vsklo = рішення проблеми "не знаю що подарувати"',
+    body: 'Головний біль покупця подарунку — не ціна, а вибір. Позиціонувати Vsklo як "ми вже вирішили це за тебе" — персональний набір закриває 90% ситуацій. Один продукт, будь-який привід.',
+    products: ['Набір чарок MIX', 'Набір LEO 2', 'Набір КУЛЯ МІХ'],
+    priority: 'high',
+    status: 'idea',
+  },
+  {
+    id: 'h7',
+    segment: 'Цінові якорі',
+    title: 'Змінити систему порівняння: не квіти, а вечеря в ресторані',
+    body: 'Зараз люди порівнюють Vsklo з квітами (₴300) або вином (₴500). Треба переключити на: вечеря для двох (₴2000+, зникне за 2 год), ювелірка (₴5000+). Набір від ₴800 — і залишиться на роки.',
+    products: ['Набір LEO 2 (₴2,469)', 'Набір чарок MIX (₴2,110)'],
+    priority: 'mid',
+    status: 'idea',
+  },
+];
+
+const statusLabels = { idea: '💡 Гіпотеза', testing: '🧪 Тестуємо', confirmed: '✅ Підтверджено', rejected: '❌ Відхилено' };
+const statusCycle = { idea: 'testing', testing: 'confirmed', confirmed: 'rejected', rejected: 'idea' };
+
+function saveHypNotes(id, val) { localStorage.setItem('hyp_notes_' + id, val); }
+function getHypNotes(id) { return localStorage.getItem('hyp_notes_' + id) || ''; }
+function saveHypStatus(id, val) { localStorage.setItem('hyp_status_' + id, val); }
+function getHypStatus(id) { return localStorage.getItem('hyp_status_' + id) || null; }
+
+function cycleStatus(id, el) {
+  const h = hypotheses.find(x => x.id === id);
+  const cur = getHypStatus(id) || h.status;
+  const next = statusCycle[cur];
+  saveHypStatus(id, next);
+  el.textContent = statusLabels[next];
+  el.className = 'hyp-status status-' + next;
+}
+
+function renderHypotheses() {
+  const grid = document.getElementById('hypGrid');
+  grid.innerHTML = hypotheses.map(h => {
+    const status = getHypStatus(h.id) || h.status;
+    const notes = getHypNotes(h.id);
+    const prioColor = { high: '#e85d4a', mid: '#e8a23a', low: '#888' }[h.priority];
+    const prioLabel = { high: 'Високий', mid: 'Середній', low: 'Низький' }[h.priority];
+    return `<div class="hyp-card">
+      <div class="hyp-header">
+        <div>
+          <div class="hyp-title">${escapeHtml(h.title)}</div>
+          <div class="hyp-segment">${escapeHtml(h.segment)}</div>
+        </div>
+        <div class="hyp-status status-${status}" onclick="cycleStatus('${h.id}', this)">${statusLabels[status]}</div>
+      </div>
+      <div class="hyp-body">${escapeHtml(h.body)}</div>
+      <div class="hyp-products">${h.products.map(p => `<span class="hyp-product">${escapeHtml(p)}</span>`).join('')}</div>
+      <div class="hyp-priority">Пріоритет: <span style="color:${prioColor}">${prioLabel}</span></div>
+      <div class="hyp-notes">
+        <textarea placeholder="Нотатки, результати тестів..." onchange="saveHypNotes('${h.id}', this.value)">${escapeHtml(notes)}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addHypothesis() {
+  const title = prompt('Назва гіпотези:');
+  if (!title) return;
+  const segment = prompt('Сегмент (напр. Повсякденність):') || '—';
+  const body = prompt('Опис ідеї:') || '';
+  const id = 'h_' + Date.now();
+  hypotheses.push({ id, segment, title, body, products: [], priority: 'mid', status: 'idea' });
+  renderHypotheses();
+}
+
+// ── ПРОДУКТИ (БЕСТСЕЛЕРИ) ────────────────────────────────────
+const products = [
+  {
+    name: 'Набір чарок MIX на підставці + пакування',
+    price: '₴2 110',
+    audience: ['Чоловіки', 'Компанія друзів', 'Подарунок без приводу'],
+    angles: ['Найкращий вибір коли не знаєш що обрати', 'Для компанії — кожному своя чарка', 'Красиво стоїть на столі — декор і функція'],
+    platforms: ['Meta Feed', 'Reels', 'Demand Gen'],
+    hook: '"Не знаєш що подарувати? MIX вирішить це за тебе."',
+  },
+  {
+    name: 'Набір ПАТРІОТ на 2 склянки',
+    price: '₴1 915',
+    audience: ['Військові', 'Патріоти', 'Подарунок побратиму'],
+    angles: ['Символ стійкості', 'Для двох — побратим і побратим', 'Доступний вхідний набір'],
+    platforms: ['Meta Feed', 'FB'],
+    hook: '"Для тих, хто розуміє без слів."',
+  },
+  {
+    name: 'Набір ПАТРІОТ на 4 склянки',
+    price: '₴3 710',
+    audience: ['Військові', 'Компанія', 'Корпоративний (малий)'],
+    angles: ['На чотирьох — на побратимів', 'Подарунок від команди', 'Символ єдності'],
+    platforms: ['Meta Feed', 'FB'],
+    hook: '"Четверо. Один набір. Одна команда."',
+  },
+  {
+    name: 'Набір КУЛЯ МІХ',
+    price: '₴2 550',
+    audience: ['Чоловіки 25–50', 'Військові', 'Мисливці'],
+    angles: ['Найсильніший візуальний хук (куля у склі)', 'Символ — не прикраса', 'MIX = різні вставки в одному наборі'],
+    platforms: ['Meta Reels', 'TikTok', 'Demand Gen'],
+    hook: '"Всередині — куля. Зовні — подарунок, який запам\'ятають."',
+  },
+  {
+    name: 'Набір БК маленький (декантер + склянки)',
+    price: '₴4 449',
+    audience: ['Начальник', 'Батько', 'Ювілей', 'Преміум-подарунок'],
+    angles: ['Статусний подарунок без пафосу', 'Декантер = рівень вище', 'Для тих хто цінує якість'],
+    platforms: ['Meta Feed', 'FB', 'Demand Gen'],
+    hook: '"Подарунок, який говорить про смак дарувальника."',
+  },
+  {
+    name: 'Набір БК великий (декантер + склянки)',
+    price: '₴6 457',
+    audience: ['Юбіляр', 'Начальник', 'Весілля', 'Преміум'],
+    angles: ['Топ-подарунок для особливої людини', 'Весільний подарунок від гостей', '"Такого ще не дарували"'],
+    platforms: ['Meta Feed', 'Demand Gen'],
+    hook: '"Для людини, якій складно щось подарувати."',
+  },
+  {
+    name: 'Набір LEO 2',
+    price: '₴2 469',
+    audience: ['Широка', 'Повсякденність', 'Перший подарунок від Vsklo'],
+    angles: ['Вхідний продукт у LEO-серії', 'Доступний преміум', 'Self-gifting: для себе'],
+    platforms: ['Meta', 'Demand Gen', 'TikTok'],
+    hook: '"Починається з двох. Хороше скло для хорошого вечора."',
+  },
+  {
+    name: 'Набір LEO 3',
+    price: '₴3 929',
+    audience: ['Чоловіки 30–50', 'Подарунок другу', 'День народження'],
+    angles: ['Три склянки + кульки = повноцінний набір', 'Виглядає дорожче ніж коштує', 'Для ціцінителів'],
+    platforms: ['Meta Feed', 'FB', 'Demand Gen'],
+    hook: '"Три склянки. Три поводи. Один набір."',
+  },
+  {
+    name: 'Набір LEO 5 (кришталь + кульки + герб)',
+    price: '₴7 629',
+    audience: ['Преміум', 'Патріоти', 'Ювілей', 'Начальник'],
+    angles: ['Кришталь + герб = рівень вище', 'Подарунок з характером і символом', 'Для тих хто цінує Україну і якість'],
+    platforms: ['Meta Feed', 'Demand Gen'],
+    hook: '"Кришталь. Герб. Україна. Рівень — інший."',
+  },
+  {
+    name: 'Набір LEO 6 (кришталь + кульки + герб)',
+    price: '₴7 759',
+    audience: ['Преміум', 'Корпоратив малий', 'Ювілей'],
+    angles: ['Аналог LEO 5, інша конфігурація', 'Великий набір для особливої людини'],
+    platforms: ['Meta Feed', 'Demand Gen'],
+    hook: '"Для людини, якій личить тільки найкраще."',
+  },
+  {
+    name: 'Набір LEO 7 (кришталь)',
+    price: '₴10 058',
+    audience: ['Преміум+', 'Корпоратив', 'Великий ювілей', 'Весілля'],
+    angles: ['Найдорожчий бестселер — статус', 'Корпоративний топ-подарунок', 'Весільний подарунок від компанії'],
+    platforms: ['Meta Feed', 'Demand Gen'],
+    hook: '"Якщо потрібно вразити — це він."',
+  },
+];
+
+function renderProducts() {
+  const grid = document.getElementById('prodGrid');
+  grid.innerHTML = products.map(p => `
+    <div class="prod-card">
+      <div class="prod-header">
+        <div class="prod-name">${escapeHtml(p.name)}</div>
+        <div class="prod-price">${p.price}</div>
+      </div>
+      <div class="prod-body">
+        <div class="prod-label">Аудиторія</div>
+        <div class="prod-tags">${p.audience.map(a => `<span class="prod-tag">${escapeHtml(a)}</span>`).join('')}</div>
+        <div class="prod-label">Кути для реклами</div>
+        <div class="prod-text">${p.angles.map((a,i) => `${i+1}. ${escapeHtml(a)}`).join('<br>')}</div>
+        <div class="prod-label">Хук</div>
+        <div class="prod-text" style="color:var(--text);font-style:italic">${escapeHtml(p.hook)}</div>
+        <div class="prod-label">Платформи</div>
+        <div class="prod-tags">${p.platforms.map(pl => `<span class="prod-tag" style="background:rgba(124,77,206,0.12);color:#7c4dce">${escapeHtml(pl)}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+}
+
 // ── FIREBASE ────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyAd95io7SyEiAKhLZwV02rwG4BKPwhj4os",
@@ -1154,6 +1451,17 @@ document.getElementById('deleteUnrated').addEventListener('click', function() {
 });
 
 render();
+renderHypotheses();
+
+// Tab navigation
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
 
 // Real-time Firebase listener — оновлює зірки для всіх підключених
 db.ref('ratings').on('value', snapshot => {
