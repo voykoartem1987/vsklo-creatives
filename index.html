@@ -1442,7 +1442,7 @@ function render(filter = 'all', search = '') {
   main.innerHTML = '';
   let total = 0;
 
-  const blockOrder = ['b1','b2','b3','b4','b5'];
+  const blockOrder = ['b1','b2','b3','b4','b5','b6'];
   blockOrder.forEach(bKey => {
     const filtered = concepts.filter(c => {
       const matchBlock = filter === 'all' || c.block === bKey && filter === bKey || filter === bKey;
